@@ -1,20 +1,28 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -g -O0
+CXXFLAGS = -std=c++17 -Wall -Wextra -g -O0 -Iinclude
 
-# Library code shared by the CLI and the tests.
-SRCS = src/binaryTree.cpp src/fileStorage.cpp
-HDRS = $(wildcard src/*.hpp)
+HDRS = $(wildcard include/dbdb/*.hpp)
+LIB_SRCS = $(wildcard src/*.cpp)
+LIB_OBJS = $(patsubst src/%.cpp,build/%.o,$(LIB_SRCS))
+LIB = build/libdbdb.a
 
-dbdb: src/main.cpp $(SRCS) $(HDRS)
-	$(CXX) $(CXXFLAGS) -o dbdb src/main.cpp $(SRCS)
+dbdb: cli/main.cpp $(LIB) $(HDRS)
+	$(CXX) $(CXXFLAGS) -o dbdb cli/main.cpp -Lbuild -ldbdb
 
-test: $(SRCS) $(HDRS) $(wildcard tests/*.cpp tests/*.h tests/*.hpp)
-	$(CXX) $(CXXFLAGS) -o run_tests $(SRCS) $(wildcard tests/*.cpp)
+$(LIB): $(LIB_OBJS)
+	ar rcs $@ $^
+
+build/%.o: src/%.cpp $(HDRS)
+	@mkdir -p build
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+test: $(LIB) $(HDRS) $(wildcard tests/*.cpp tests/*.h)
+	$(CXX) $(CXXFLAGS) -o run_tests $(wildcard tests/*.cpp) -Lbuild -ldbdb
 
 run_tests: test
 	./run_tests
 
 clean:
-	rm -f dbdb run_tests
+	rm -rf build dbdb run_tests
 
 .PHONY: test clean

@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <thread>
 #include "doctest.h"
-#include "../src/fileStorage.hpp"
+#include "dbdb/fileStorage.hpp"
 
 static const char* TEST_DB = "test_fileStorage.db";
 

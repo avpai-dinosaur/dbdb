@@ -1,9 +1,9 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include "dbdb.hpp"
-#include "memoryStorage.hpp"
-#include "binaryTree.hpp"
+#include "dbdb/dbdb.hpp"
+#include "dbdb/memoryStorage.hpp"
+#include "dbdb/binaryTree.hpp"
 
 static int usage()
 {

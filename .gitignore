@@ -2,3 +2,4 @@
 *.db
 dbdb
 run_tests
+build/
