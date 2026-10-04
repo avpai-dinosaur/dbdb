@@ -1,7 +1,7 @@
 #include <stdexcept>
 #include "doctest.h"
-#include "../binaryTree.hpp"
-#include "../memoryStorage.hpp"
+#include "../src/binaryTree.hpp"
+#include "../src/memoryStorage.hpp"
 
 static Node make_node(const std::string& key, const Bytes& value, Address left, Address right)
 {

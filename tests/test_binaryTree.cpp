@@ -1,6 +1,6 @@
 #include "doctest.h"
-#include "../binaryTree.hpp"
-#include "../memoryStorage.hpp"
+#include "../src/binaryTree.hpp"
+#include "../src/memoryStorage.hpp"
 
 static std::string get_str(BinaryTree& bt, const std::string& key)
 {
