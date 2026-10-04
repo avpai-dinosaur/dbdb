@@ -4,14 +4,10 @@ services:
   # Holds the driver binaries (linked against libdbdb.a) at /opt/antithesis/test/v1/main/
   # and sleeps until Antithesis runs them.
   drivers:
+    image: ${REPOSITORY}/dbdb-drivers:latest
     container_name: dbdb-drivers
     hostname: dbdb-drivers
     platform: linux/amd64
     init: true
-    build:
-      context: ../..
-      dockerfile: antithesis/Dockerfile
-      target: drivers
-    image: dbdb-drivers:latest
     environment:
       NO_COLOR: "1"

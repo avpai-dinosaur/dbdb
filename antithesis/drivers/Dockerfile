@@ -1,4 +1,4 @@
-# Build context is the repo root (see config/docker-compose.yaml).
+# Note: build context is the repo root
 
 # Build libdbdb.a and link every driver against it.
 FROM debian:stable-slim AS build
@@ -19,5 +19,5 @@ ENV NO_COLOR=1
 ENV DBDB_PATH=/data/dbdb.db
 RUN mkdir -p /data
 COPY --from=build /src/antithesis/drivers/bin/ /opt/antithesis/test/v1/main/
-COPY antithesis/setup-complete.sh /opt/antithesis/setup-complete.sh
+COPY antithesis/drivers/setup-complete.sh /opt/antithesis/setup-complete.sh
 CMD ["bash", "-c", "/opt/antithesis/setup-complete.sh && exec sleep infinity"]
