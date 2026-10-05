@@ -41,7 +41,14 @@ test: $(LIB) $(HDRS) $(wildcard tests/*.cpp tests/*.h)
 run_tests: test
 	./run_tests
 
+# IntelliSense (clangd) reads compile_commands.json to learn each file's
+# include paths. tools/gen_compile_commands.py derives it from these Makefiles
+# via `make -n`, so it cannot drift from the real build. Re-run after adding a
+# source file or changing CXXFLAGS.
+compile_commands.json:
+	python3 tools/gen_compile_commands.py .
+
 clean:
 	rm -rf build build-antithesis dbdb run_tests
 
-.PHONY: test clean
+.PHONY: test clean compile_commands.json

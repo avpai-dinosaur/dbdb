@@ -5,3 +5,5 @@ run_tests
 build/
 build-antithesis/
 antithesis/drivers/bin/
+compile_commands.json
+.cache/

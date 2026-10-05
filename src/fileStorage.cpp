@@ -46,7 +46,6 @@ std::uint64_t FileStorage::read_u64()
 
 void FileStorage::lock()
 {
-    // TODO: This is currently a spin lock
     while (::flock(lockFd, LOCK_EX) != 0)
     {
         if (errno != EINTR) throw std::runtime_error(std::string("flock failed: ") + std::strerror(errno));

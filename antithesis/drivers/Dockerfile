@@ -15,9 +15,16 @@ WORKDIR /src
 COPY Makefile ./
 COPY include ./include
 COPY src ./src
+COPY cli ./cli
 COPY antithesis/sdk ./antithesis/sdk
 COPY antithesis/drivers ./antithesis/drivers
 RUN make -C antithesis/drivers
+# The dbdb CLI, for poking at the database by hand in the multiverse debugger.
+# Built without ANTITHESIS=1 on purpose: an uninstrumented binary neither needs
+# libvoidstar nor reports coverage, so inspecting state from a debug shell can't
+# be mistaken for the workload exercising new code. Separate build dir
+# (build/ vs build-antithesis/), so this does not disturb the drivers' library.
+RUN make dbdb
 
 # Runtime: the drivers as test commands, idle until Antithesis runs them.
 FROM debian:stable-slim AS drivers
@@ -30,5 +37,8 @@ COPY antithesis/lib/libvoidstar.so /usr/lib/libvoidstar.so
 COPY --from=build /src/antithesis/drivers/bin/ /opt/antithesis/test/v1/main/
 # Unstripped copies of the same binaries, so Antithesis can symbolize coverage.
 COPY --from=build /src/antithesis/drivers/bin/ /symbols/
+# On PATH, not in the test command directory -- Antithesis runs everything under
+# /opt/antithesis/test/v1/main/ as a test command, and this is a debugging tool.
+COPY --from=build /src/dbdb /usr/local/bin/dbdb
 COPY antithesis/drivers/setup-complete.sh /opt/antithesis/setup-complete.sh
 CMD ["bash", "-c", "/opt/antithesis/setup-complete.sh && exec sleep infinity"]

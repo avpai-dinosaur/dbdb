@@ -1,8 +1,6 @@
 #include <iostream>
-#include <memory>
 #include <string>
 #include "dbdb/dbdb.hpp"
-#include "dbdb/memoryStorage.hpp"
 #include "dbdb/binaryTree.hpp"
 
 static int usage()

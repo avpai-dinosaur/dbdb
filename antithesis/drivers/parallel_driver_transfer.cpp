@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <iostream>
 #include <optional>
 #include <string>
 #include "dbdb/binaryTree.hpp"
