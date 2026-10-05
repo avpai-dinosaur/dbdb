@@ -1,7 +1,7 @@
-.vscode
-*.db
-dbdb
-run_tests
+.git
 build/
 build-antithesis/
+dbdb
+run_tests
+*.db
 antithesis/drivers/bin/

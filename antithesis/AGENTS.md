@@ -11,6 +11,23 @@ Use this command to quickly validate changes to the Antithesis scaffolding. See 
 **setup-complete.sh**
 Inject this script into a Dockerfile to notify Antithesis that setup is complete. This script should only run once the system under test is ready for testing. Antithesis will not run any test commands until it receives this event.
 
+**sdk**
+This directory holds the vendored Antithesis C++ SDK headers (see `sdk/README.md`).
+`antithesis_instrumentation.h` supplies the sanitizer-coverage callbacks;
+`antithesis_sdk.h` supplies assertions for the workload. Both require clang 16+
+and C++20, which is why the project builds with `clang++ -std=c++20`.
+
+**lib**
+Holds `libvoidstar.so`, the stub instrumentation library. The drivers image copies
+it to `/usr/lib/libvoidstar.so`, where the SDK dlopens it; Antithesis substitutes
+the real implementation at test time.
+
+**instrumentation**
+Drivers are always built with `-fsanitize-coverage=trace-pc-guard` and link the
+instrumented `libdbdb.a` built by `make ANTITHESIS=1` into `build-antithesis/`.
+Plain `make` stays uninstrumented for ordinary development. Verify a driver is
+instrumented with `nm <binary> | grep antithesis_load_libvoidstar`.
+
 **config**
 This directory contains the `docker-compose.yaml` file used to bring up this system within the Antithesis environment, along with any closely related config files. Snouty will push tagged images, consume this config directory, and launch the run.
 

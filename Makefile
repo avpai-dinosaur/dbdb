@@ -1,28 +1,47 @@
-CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -g -O0 -Iinclude
+CXX = clang++
+
+# ANTITHESIS=1 compiles the library with LLVM sanitizer coverage so the
+# Antithesis fuzzer can observe which edges a test exercised. Instrumented
+# objects go to their own directory.
+ANTITHESIS ?= 0
+ifeq ($(ANTITHESIS),1)
+  BUILD = build-antithesis
+  # -fno-sanitize-link-runtime keeps clang from auto-linking compiler-rt's
+  # sanitizer runtime, whose coverage callbacks would duplicate the SDK's.
+  ANT_CXXFLAGS = -fsanitize-coverage=trace-pc-guard -fno-sanitize-link-runtime -Iantithesis/sdk
+  # Every instrumented *binary* needs exactly one TU defining the coverage
+  # callbacks (the archive itself does not, which is why this is a link input).
+  ANT_SUPPORT = antithesis/sdk/instrumentation.cpp
+else
+  BUILD = build
+  ANT_CXXFLAGS =
+  ANT_SUPPORT =
+endif
+
+CXXFLAGS = -std=c++20 -Wall -Wextra -g -O0 -Iinclude $(ANT_CXXFLAGS)
 
 HDRS = $(wildcard include/dbdb/*.hpp)
 LIB_SRCS = $(wildcard src/*.cpp)
-LIB_OBJS = $(patsubst src/%.cpp,build/%.o,$(LIB_SRCS))
-LIB = build/libdbdb.a
+LIB_OBJS = $(patsubst src/%.cpp,$(BUILD)/%.o,$(LIB_SRCS))
+LIB = $(BUILD)/libdbdb.a
 
 dbdb: cli/main.cpp $(LIB) $(HDRS)
-	$(CXX) $(CXXFLAGS) -o dbdb cli/main.cpp -Lbuild -ldbdb
+	$(CXX) $(CXXFLAGS) -o dbdb cli/main.cpp $(ANT_SUPPORT) -L$(BUILD) -ldbdb
 
 $(LIB): $(LIB_OBJS)
 	ar rcs $@ $^
 
-build/%.o: src/%.cpp $(HDRS)
-	@mkdir -p build
+$(BUILD)/%.o: src/%.cpp $(HDRS)
+	@mkdir -p $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 test: $(LIB) $(HDRS) $(wildcard tests/*.cpp tests/*.h)
-	$(CXX) $(CXXFLAGS) -o run_tests $(wildcard tests/*.cpp) -Lbuild -ldbdb
+	$(CXX) $(CXXFLAGS) -o run_tests $(wildcard tests/*.cpp) $(ANT_SUPPORT) -L$(BUILD) -ldbdb
 
 run_tests: test
 	./run_tests
 
 clean:
-	rm -rf build dbdb run_tests
+	rm -rf build build-antithesis dbdb run_tests
 
 .PHONY: test clean
