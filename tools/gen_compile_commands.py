@@ -5,6 +5,11 @@ Runs `make -Bn` (dry run) over the top-level and drivers builds and turns the
 printed compile lines into a compile database, so the flags IntelliSense uses
 are by construction the flags the build uses. Nothing is compiled.
 
+Also records the compiler's real system include paths, which clangd cannot work
+out for itself under a nix cc-wrapper (see system_includes). That makes the
+database self-contained: no .vscode settings are needed, and it works however the
+editor was launched.
+
 Re-run after adding a source file or changing CXXFLAGS:
 
     make compile_commands.json
@@ -19,6 +24,55 @@ def dry_run(cwd, targets):
     r = subprocess.run(["make", "-Bnw"] + targets, cwd=cwd,
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     return r.stdout.splitlines()
+
+
+_SYSTEM_INCLUDES = {}
+
+
+def system_includes(cxx):
+    """Ask the driver where its system headers actually live.
+
+    Needed because of how the nix cc-wrapper works: it is a shell script that
+    bakes in -nostdlibinc and then re-supplies libc++ via -cxx-isystem and glibc
+    via -idirafter, with the dev shell adding more through NIX_CFLAGS_COMPILE.
+    clangd parses the recorded command rather than executing the wrapper, so none
+    of that reaches it and every standard header comes back "file not found".
+
+    Recording the real search list in the database keeps IntelliSense working
+    with no editor configuration at all, which matters here: .vscode is
+    gitignored, so settings kept there do not survive a `git clean`. Same
+    principle as the compile flags themselves -- read them off the build rather
+    than maintain a second copy by hand.
+    """
+    if cxx in _SYSTEM_INCLUDES:
+        return _SYSTEM_INCLUDES[cxx]
+    flags = []
+    try:
+        r = subprocess.run([cxx, "-E", "-v", "-x", "c++", os.devnull],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+    except OSError:
+        r = None
+    if r is not None and r.returncode == 0:
+        keep, dirs = False, []
+        for line in r.stderr.splitlines():
+            if line.startswith("#include <...> search starts here:"):
+                keep = True
+            elif line.startswith("End of search list."):
+                break
+            elif keep:
+                d = line.strip()
+                if d and os.path.isdir(d):
+                    dirs.append(d)
+        if dirs:
+            # Drop the defaults and re-add exactly what the driver reports, in
+            # its order. Correct for a plain toolchain too: there the query just
+            # returns the standard directories we removed.
+            flags = ["-nostdlibinc"] + [f for d in dirs for f in ("-isystem", d)]
+    if not flags:
+        print(f"warning: could not read system include paths from {cxx}; "
+              "clangd may not find standard headers", file=sys.stderr)
+    _SYSTEM_INCLUDES[cxx] = flags
+    return flags
 
 
 ENTER = re.compile(r"^make(?:\[\d+\])?: Entering directory ['\"](.*)['\"]$")
@@ -75,7 +129,7 @@ def entries(lines, cwd):
             out.append({
                 "directory": cwd,
                 "file": os.path.normpath(os.path.join(cwd, s)),
-                "arguments": [cxx] + base + ["-c", s],
+                "arguments": [cxx] + system_includes(cxx) + base + ["-c", s],
             })
     return out
 
