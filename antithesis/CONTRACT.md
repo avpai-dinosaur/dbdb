@@ -27,8 +27,14 @@ dbdb DBNAME set KEY VALUE
 dbdb DBNAME delete KEY
 ```
 
-Each is a complete transaction: connect, apply, commit, exit. Exit 0 on success,
-2 for a missing key on `get`, non-zero otherwise.
+Each is a complete transaction: connect, apply, commit, exit. Exit 0 on success
+and non-zero on failure, with a distinct code for a missing key on `get` (the
+C++ implementation uses 2, the Python one 3).
+
+This mode is a human convenience and the harness never uses it, so the exact
+codes and the output framing — whether `get` terminates its value with a
+newline, say — are left to the implementation. The REPL below is the normative
+surface.
 
 ### REPL — what the harness actually uses
 
@@ -54,6 +60,9 @@ Required behavior:
 - **`set` and `delete` do not commit.** The first one opens a transaction, held
   until an explicit `commit`. This is what makes multi-write atomicity testable;
   an implementation that auto-commits each write cannot be tested for it.
+- **`delete` on an absent key answers `OK`.** Deletion is idempotent: a workload
+  retrying after a fault must not see a spurious error. It still opens a
+  transaction, like any other write.
 - **`exit` or EOF discards uncommitted writes** and releases any lock held.
 - **`ERR` is not fatal.** The process stays up and the stream stays usable.
 - **stdout carries nothing but responses.** Diagnostics go to stderr.
@@ -74,7 +83,7 @@ An implementation publishes a container image containing:
 
 | path | contents |
 |---|---|
-| `/out/bin/dbdb` | the executable above. **Required.** |
+| `/out/bin/dbdb` | the executable above. **Required.** Anything executable — a compiled binary, a script, a zipapp — as long as it is one self-contained file. |
 | `/out/bin/*` | anything else that should land on `PATH`. Optional. |
 | `/out/symbols/` | unstripped binaries, so Antithesis can symbolize coverage. Must exist; may hold nothing if the implementation has no symbols to ship. |
 
@@ -100,7 +109,11 @@ image places at `/usr/lib/libvoidstar.so`. For compiled languages, verify with:
 nm /out/bin/dbdb | grep antithesis_load_libvoidstar
 ```
 
-An interpreted implementation has no equivalent, and will report no coverage.
+An interpreted implementation has no equivalent and reports no coverage, which
+makes it useful for checking that the harness is implementation-agnostic, but a
+poor choice for the implementation you actually want the fuzzer to search.
+`dbdb-python/` is the worked example: it bundles its package tree into a zipapp
+so that one file satisfies `/out/bin/dbdb`, and ships an empty `/out/symbols/`.
 
 ---
 
@@ -115,5 +128,11 @@ An interpreted implementation has no equivalent, and will report no coverage.
 ```
 make -C antithesis IMPL=dbdb-<lang>
 ```
+
+That builds `dbdb-<lang>:latest`, then the harness image
+`dbdb-drivers-<lang>:latest` on top of it, and records the flavor in
+`config/.env` so compose and snouty launch the one you just built. Each
+implementation has its own harness image, so switching back and forth never
+overwrites the other.
 
 No file in `antithesis/` needs to change.

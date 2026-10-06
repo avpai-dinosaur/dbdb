@@ -24,6 +24,12 @@ then builds the harness image `FROM` it, copying out `/out/bin/` and
 The dependency points one way: the harness knows implementations exist, they do
 not know it exists.
 
+Each implementation gets its own harness image — `IMPL=dbdb-python` produces
+`dbdb-drivers-python:latest` — so builds never overwrite each other. The build
+records the flavor in `config/.env`, which is what compose and snouty read, so
+the config always points at the image you just built. Change implementations via
+`IMPL=` on the make command, never by editing `config/.env` by hand.
+
 **lib**
 Holds `libvoidstar.so`, the stub instrumentation library. The harness image copies
 it to `/usr/lib/libvoidstar.so`, where an instrumented binary dlopens it;
