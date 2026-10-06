@@ -33,3 +33,29 @@ make run_tests   # builds and runs the unit tests
 - **The file only grows.** Old nodes are never removed. Could be solved with a compaction mechanism.
 - **Stale reads.** Any past root address still points to a
   complete tree, so you could read the database as of an earlier commit.
+
+---
+
+## Bug Catalog
+
+### Read Isolation Violated
+
+*Date:* `10/05/2026`
+
+*Hash:* `889d275a215d6c8411d9f0f65cc15544487656cb`
+
+Process 54 reads `accountA` at root 271 and `accountB` at root 375 while process 51 commits a transfer in between. Process 54 sees both accounts `full` and fails `ALWAYS(count == 1)` on a state that never existed on disk.
+
+- **Run:** `ccb1fd8faeec545d6830be3e5c2ca4a8-63-5`
+- **Logs:** [search at vtime 13.381](https://honey-whale.antithesis.com/search?search=v6veyJxIjp7Im4iOnsiciI6eyJoIjpbeyJoIjpbeyJjIjoibW9tZW50LnZ0aW1lIiwiZiI6ImdlbmVyYWwuY3VzdG9tIiwibyI6Im1hdGNoZXMiLCJ2IjoiMTMuMzgxMzA0OTQ4ODIzNTI3In1dLCJvIjoib3IifSx7ImgiOlt7ImMiOiJtb21lbnQuaW5wdXRfaGFzaCIsImYiOiJnZW5lcmFsLmN1c3RvbSIsIm8iOiJtYXRjaGVzIiwidiI6IjkwNjg3NDE0ODU0MzI2NjkzMzEifV0sIm8iOiJvciJ9XSwibyI6ImFuZCJ9LCJ0Ijp7ImciOmZhbHNlLCJtIjoiIn0sInkiOiJub25lIn19LCJzIjoiOGE2NmJmNmU5MmE0YjY0ODM2ZGE0N2NlMTg4ZmM4NTUtNjMtNSJ9)
+- **Moment:** `Moment.from({ session_id: "8a66bf6e92a4b64836da47ce188fc855-63-5", input_hash: "9068741485432669331", vtime: 13.381304948823527 })`
+
+| vtime | pid | event |
+|---|---|---|
+| 13.269 | 54 | `view_refresh reason="get_unlocked" old_root=271 new_root=271` |
+| 13.275 | 51 | `commit_begin seq=1` |
+| 13.295 | 51 | `node_commit addr=323 key="accountB" value="full" left=0 right=0` |
+| 13.304 | 51 | `node_commit addr=375 key="accountA" value="empty" left=0 right=323` |
+| 13.309 | 51 | `root_commit old_root=271 new_root=375` |
+| 13.310 | 51 | `commit_end seq=1` |
+| 13.330 | 54 | `view_refresh reason="get_unlocked" old_root=271 new_root=375` |
