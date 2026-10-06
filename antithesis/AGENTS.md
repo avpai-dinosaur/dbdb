@@ -23,10 +23,19 @@ it to `/usr/lib/libvoidstar.so`, where the SDK dlopens it; Antithesis substitute
 the real implementation at test time.
 
 **instrumentation**
-Drivers are always built with `-fsanitize-coverage=trace-pc-guard` and link the
-instrumented `libdbdb.a` built by `make ANTITHESIS=1` into `build-antithesis/`.
-Plain `make` stays uninstrumented for ordinary development. Verify a driver is
-instrumented with `nm <binary> | grep antithesis_load_libvoidstar`.
+The test commands are Python and are not themselves instrumented. Coverage comes
+entirely from the `dbdb` CLI they drive, so that binary must stay instrumented:
+`make ANTITHESIS=1` builds `./dbdb-instrumented` with
+`-fsanitize-coverage=trace-pc-guard`, linking the instrumented `libdbdb.a` from
+`build-antithesis/` plus `sdk/instrumentation.cpp`. Plain `make` builds an
+uninstrumented `./dbdb` for ordinary development, shipped as `dbdb-debug` for
+debug shells. Verify with `nm <binary> | grep antithesis_load_libvoidstar`.
+If the workload ever stops reporting coverage, check that the drivers are
+spawning `dbdb` and not `dbdb-debug`.
+
+**drivers**
+Holds the image definition only (`Dockerfile`, `setup-complete.sh`). The test
+commands themselves live in `test/`.
 
 **config**
 This directory contains the `docker-compose.yaml` file used to bring up this system within the Antithesis environment, along with any closely related config files. Snouty will push tagged images, consume this config directory, and launch the run.
@@ -35,4 +44,7 @@ This directory contains the `docker-compose.yaml` file used to bring up this sys
 This directory is the Antithesis scratchbook for the codebase. It contains documents such as system analysis, property catalogs, topology plans, per-property evidence files (in `scratchbook/properties/`), property relationship maps, and other persistent integration notes. Keep it up to date as Antithesis-related decisions change.
 
 **test**
-This directory contains test templates. A test template is a directory containing test command executable files. Each test command must have a valid prefix: `parallel_driver_, singleton_driver_, serial_driver_, first_, eventually_, finally_, anytime_`. Prefixes constrain when and how commands are composed in a single timeline. Files or subdirectories prefixed with `helper_` are ignored by Antithesis and can be used for helper scripts kept alongside the commands.
+This directory contains test templates. `test/main/` maps to
+`/opt/antithesis/test/v1/main/` in the image. The commands are Python and talk to
+the database over the CLI's line protocol via `helper_dbdb.py` (see the REPL
+section of the top-level README), so the workload is not tied to C++. A test template is a directory containing test command executable files. Each test command must have a valid prefix: `parallel_driver_, singleton_driver_, serial_driver_, first_, eventually_, finally_, anytime_`. Prefixes constrain when and how commands are composed in a single timeline. Files or subdirectories prefixed with `helper_` are ignored by Antithesis and can be used for helper scripts kept alongside the commands.

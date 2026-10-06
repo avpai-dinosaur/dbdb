@@ -1,8 +1,8 @@
 name: dbdb
 
 services:
-  # Holds the driver binaries (linked against libdbdb.a) at /opt/antithesis/test/v1/main/
-  # and sleeps until Antithesis runs them.
+  # Holds the Python test commands at /opt/antithesis/test/v1/main/ and the
+  # instrumented dbdb CLI they drive, and sleeps until Antithesis runs them.
   drivers:
     image: ${REPOSITORY}/dbdb-drivers:latest
     container_name: dbdb-drivers
