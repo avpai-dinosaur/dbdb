@@ -8,10 +8,10 @@ ifeq ($(ANTITHESIS),1)
   BUILD = build-antithesis
   # -fno-sanitize-link-runtime keeps clang from auto-linking compiler-rt's
   # sanitizer runtime, whose coverage callbacks would duplicate the SDK's.
-  ANT_CXXFLAGS = -fsanitize-coverage=trace-pc-guard -fno-sanitize-link-runtime -Iantithesis/sdk
+  ANT_CXXFLAGS = -fsanitize-coverage=trace-pc-guard -fno-sanitize-link-runtime -Iantithesis-sdk
   # Every instrumented *binary* needs exactly one TU defining the coverage
   # callbacks (the archive itself does not, which is why this is a link input).
-  ANT_SUPPORT = antithesis/sdk/instrumentation.cpp
+  ANT_SUPPORT = antithesis-sdk/instrumentation.cpp
   # --build-id stamps the binary so Antithesis can match it to the unstripped
   # copy in /symbols.
   ANT_LDFLAGS = -Wl,--build-id

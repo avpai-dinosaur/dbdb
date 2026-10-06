@@ -1,23 +1,24 @@
 # dbdb
 
-A C++ implementation of [DBDB: Dog Bed Database](https://aosabook.org/en/500L/dbdb-dog-bed-database.html).
+A key-value store built on an append-only file, after
+[DBDB: Dog Bed Database](https://aosabook.org/en/500L/dbdb-dog-bed-database.html),
+together with an Antithesis test harness for it.
 
-The database is a simple key-value store built on an append-only file.
+## Layout
 
-## Build
+| directory | what it is |
+|---|---|
+| [`dbdb-cpp/`](dbdb-cpp/) | the C++ implementation — build and usage instructions live there |
+| [`antithesis/`](antithesis/) | the Antithesis test harness, which names no implementation language |
 
-```bash
-make             # builds ./dbdb
-make run_tests   # builds and runs the unit tests
-```
+The harness tests *a* dbdb, not *this* dbdb. It drives the CLI's line protocol
+and knows nothing else about what is underneath, so the storage format, the tree,
+and the locking strategy can all change without touching it.
 
-## Usage
-
-```bash
-./dbdb DBNAME set KEY VALUE
-./dbdb DBNAME get KEY
-./dbdb DBNAME delete KEY
-```
+[`antithesis/CONTRACT.md`](antithesis/CONTRACT.md) is the entire interface
+between the two: a command-line protocol, and two paths in a container image. A
+second implementation is a new `dbdb-<lang>/` directory that satisfies it — no
+file under `antithesis/` changes.
 
 ## Guarantees
 

@@ -1,8 +1,8 @@
-.git
 build/
 build-antithesis/
 dbdb
 dbdb-instrumented
 run_tests
+compile_commands.json
 *.db
-__pycache__/
+.cache/

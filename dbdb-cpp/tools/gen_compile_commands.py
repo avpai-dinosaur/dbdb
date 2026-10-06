@@ -137,8 +137,8 @@ def entries(lines, cwd):
 db, seen = [], set()
 passes = [
     (ROOT, ["dbdb", "test"]),
-    # The instrumented build, so clangd understands antithesis/sdk/instrumentation.cpp
-    # and the -Iantithesis/sdk include path. ANTITHESIS=1 is a command-line
+    # The instrumented build, so clangd understands antithesis-sdk/instrumentation.cpp
+    # and the -Iantithesis-sdk include path. ANTITHESIS=1 is a command-line
     # variable assignment, which make accepts in the same position as a target.
     (ROOT, ["ANTITHESIS=1", "dbdb-instrumented"]),
 ]

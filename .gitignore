@@ -1,10 +1,12 @@
 .vscode
 *.db
-/dbdb
-/dbdb-instrumented
-/run_tests
-build/
-build-antithesis/
-compile_commands.json
-.cache/
 __pycache__/
+
+# dbdb-cpp build artifacts
+dbdb-cpp/build/
+dbdb-cpp/build-antithesis/
+dbdb-cpp/dbdb
+dbdb-cpp/dbdb-instrumented
+dbdb-cpp/run_tests
+dbdb-cpp/compile_commands.json
+dbdb-cpp/.cache/
