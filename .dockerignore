@@ -2,6 +2,7 @@
 build/
 build-antithesis/
 dbdb
+dbdb-instrumented
 run_tests
 *.db
-antithesis/drivers/bin/
+__pycache__/

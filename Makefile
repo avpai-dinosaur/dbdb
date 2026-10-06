@@ -12,10 +12,19 @@ ifeq ($(ANTITHESIS),1)
   # Every instrumented *binary* needs exactly one TU defining the coverage
   # callbacks (the archive itself does not, which is why this is a link input).
   ANT_SUPPORT = antithesis/sdk/instrumentation.cpp
+  # --build-id stamps the binary so Antithesis can match it to the unstripped
+  # copy in /symbols.
+  ANT_LDFLAGS = -Wl,--build-id
+  # A distinct output name, so the two variants can coexist in one image and so
+  # flipping ANTITHESIS actually relinks instead of finding the target "up to
+  # date" from the other build.
+  CLI = dbdb-instrumented
 else
   BUILD = build
   ANT_CXXFLAGS =
   ANT_SUPPORT =
+  ANT_LDFLAGS =
+  CLI = dbdb
 endif
 
 CXXFLAGS = -std=c++20 -Wall -Wextra -g -O0 -Iinclude $(ANT_CXXFLAGS)
@@ -25,8 +34,9 @@ LIB_SRCS = $(wildcard src/*.cpp)
 LIB_OBJS = $(patsubst src/%.cpp,$(BUILD)/%.o,$(LIB_SRCS))
 LIB = $(BUILD)/libdbdb.a
 
-dbdb: cli/main.cpp $(LIB) $(HDRS)
-	$(CXX) $(CXXFLAGS) -o dbdb cli/main.cpp $(ANT_SUPPORT) -L$(BUILD) -ldbdb
+# Default goal: ./dbdb normally, ./dbdb-instrumented under ANTITHESIS=1.
+$(CLI): cli/main.cpp $(LIB) $(HDRS)
+	$(CXX) $(CXXFLAGS) $(ANT_LDFLAGS) -o $(CLI) cli/main.cpp $(ANT_SUPPORT) -L$(BUILD) -ldbdb
 
 $(LIB): $(LIB_OBJS)
 	ar rcs $@ $^
@@ -49,6 +59,6 @@ compile_commands.json:
 	python3 tools/gen_compile_commands.py .
 
 clean:
-	rm -rf build build-antithesis dbdb run_tests
+	rm -rf build build-antithesis dbdb dbdb-instrumented run_tests
 
 .PHONY: test clean compile_commands.json

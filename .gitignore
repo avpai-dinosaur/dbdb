@@ -1,9 +1,10 @@
 .vscode
 *.db
 /dbdb
+/dbdb-instrumented
 /run_tests
 build/
 build-antithesis/
-antithesis/drivers/bin/
 compile_commands.json
 .cache/
+__pycache__/

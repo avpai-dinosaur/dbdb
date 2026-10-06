@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate compile_commands.json for clangd from the Makefiles themselves.
 
-Runs `make -Bn` (dry run) over the top-level and drivers builds and turns the
+Runs `make -Bn` (dry run) over the plain and instrumented builds and turns the
 printed compile lines into a compile database, so the flags IntelliSense uses
 are by construction the flags the build uses. Nothing is compiled.
 
@@ -137,7 +137,10 @@ def entries(lines, cwd):
 db, seen = [], set()
 passes = [
     (ROOT, ["dbdb", "test"]),
-    (os.path.join(ROOT, "antithesis", "drivers"), ["all"]),
+    # The instrumented build, so clangd understands antithesis/sdk/instrumentation.cpp
+    # and the -Iantithesis/sdk include path. ANTITHESIS=1 is a command-line
+    # variable assignment, which make accepts in the same position as a target.
+    (ROOT, ["ANTITHESIS=1", "dbdb-instrumented"]),
 ]
 for cwd, targets in passes:
     if not os.path.isdir(cwd):
@@ -176,6 +179,6 @@ if missing:
           file=sys.stderr)
     for m in missing:
         print("  ", os.path.relpath(m, ROOT), file=sys.stderr)
-    print("Build once (`make dbdb test && make -C antithesis/drivers all`), "
+    print("Build once (`make dbdb test && make ANTITHESIS=1`), "
           "then re-run.", file=sys.stderr)
     sys.exit(1)
