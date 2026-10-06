@@ -1,4 +1,5 @@
 #include "dbdb/fileStorage.hpp"
+#include "dbdb/trace.hpp"
 #include <cerrno>
 #include <cstring>
 #include <stdexcept>
@@ -81,7 +82,9 @@ void FileStorage::commit_root_address(Address address)
 {
     file.clear();
     file.seekp(0);
+    dbdb::trace::emit("root_commit", {{"old_root", root}, {"new_root", address}});
     write_u64(address);
+    root = address;
     file.flush();
 }
 
@@ -89,5 +92,6 @@ Address FileStorage::get_root_address()
 {
     file.clear();
     file.seekg(0);
-    return read_u64();
+    root = read_u64();
+    return root;
 }

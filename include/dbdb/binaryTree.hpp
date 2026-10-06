@@ -44,7 +44,7 @@ protected:
     void set_entry(const std::string& key, const Bytes& value) override { root = insert_helper(key, value, root); }
     void remove_entry(const std::string& key) override { root = remove_helper(key, root); }
     void commit_data() override { storage.commit_root_address(commit_helper(root)); }
-    void refresh_database_view() override;
+    void refresh_database_view(const char* reason) override;
 public:
     explicit BinaryTree(Storage& storage) : LogicalBase(storage) { root = NodeRef(storage.get_root_address(), nullptr); }
     std::vector<std::string> in_order() { std::vector<std::string> values; in_order_helper(root, values); return values; }

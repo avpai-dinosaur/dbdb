@@ -8,6 +8,8 @@ constexpr Address NULL_ADDRESS = 0;
 
 class Storage
 {
+protected:
+    Address root = NULL_ADDRESS;
 public:
     virtual ~Storage() = default;
     virtual void lock() = 0;

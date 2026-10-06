@@ -1,4 +1,5 @@
 #include "dbdb/binaryTree.hpp"
+#include "dbdb/trace.hpp"
 
 Bytes Node::encode() const
 {
@@ -87,12 +88,21 @@ Address BinaryTree::commit_helper(const NodeRef& nodeRef)
     if (node == nullptr) return NULL_ADDRESS;
     node->left.address = commit_helper(node->left);
     node->right.address = commit_helper(node->right);
-    return storage.write(node->encode());
+    Address commitAddress = storage.write(node->encode());
+    dbdb::trace::emit("node_commit", {{"addr", commitAddress},
+                                      {"key", node->key},
+                                      {"value", node->value},
+                                      {"left", node->left.address},
+                                      {"right", node->right.address}});
+    return commitAddress;
 }
 
-void BinaryTree::refresh_database_view() 
+void BinaryTree::refresh_database_view(const char* reason) 
 { 
     Address latest = storage.get_root_address();
+    dbdb::trace::emit("view_refresh", {{"reason", reason},
+                                       {"old_root", root.address},
+                                       {"new_root", latest}});
     if (latest != root.address)
     {
         root = NodeRef(latest, nullptr); 

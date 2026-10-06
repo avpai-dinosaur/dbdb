@@ -1,7 +1,9 @@
 #pragma once
+#include <cstdint>
 #include <optional>
 #include <string>
 #include "storage.hpp"
+#include "trace.hpp"
 
 struct Value
 {
@@ -27,13 +29,15 @@ class LogicalBase
 {
 private:
     bool isLockHeld = false;
+    std::uint64_t commitSequence = 0;
 protected:
     Storage& storage;
     virtual std::optional<Bytes> get_entry(const std::string& key) = 0;
     virtual void set_entry(const std::string& key, const Bytes& value) = 0;
     virtual void remove_entry(const std::string& key) = 0;
     virtual void commit_data() = 0;
-    virtual void refresh_database_view() = 0;
+    // reason is a tag for debug logs
+    virtual void refresh_database_view(const char* reason) = 0;
 public:
     explicit LogicalBase(Storage& storage) : storage(storage) {}
     virtual ~LogicalBase() = default;
@@ -42,7 +46,7 @@ public:
     {
         if (!isLockHeld)
         {
-            refresh_database_view();
+            refresh_database_view("get_unlocked");
         }
         return get_entry(key);
     }   
@@ -53,7 +57,7 @@ public:
         {
             storage.lock();
             isLockHeld = true;
-            refresh_database_view();
+            refresh_database_view("set_locked");
         }
         return set_entry(key, value);
     }
@@ -64,15 +68,18 @@ public:
         {
             storage.lock();
             isLockHeld = true;
-            refresh_database_view();
+            refresh_database_view("remove_locked");
         }
         return remove_entry(key);
     }
 
     void commit()
     {
+        const std::uint64_t seq = ++commitSequence;
+        dbdb::trace::emit("commit_begin", {{"seq", seq}});
         commit_data();
         storage.unlock();
         isLockHeld = false;
+        dbdb::trace::emit("commit_end", {{"seq", seq}});
     }
 };
