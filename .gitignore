@@ -10,3 +10,9 @@ dbdb-cpp/dbdb-instrumented
 dbdb-cpp/run_tests
 dbdb-cpp/compile_commands.json
 dbdb-cpp/.cache/
+
+# dbdb-rust build artifacts
+dbdb-rust/target/
+dbdb-rust/target-antithesis/
+dbdb-rust/dbdb
+dbdb-rust/dbdb-instrumented

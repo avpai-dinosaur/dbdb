@@ -9,6 +9,7 @@ together with an Antithesis test harness for it.
 | directory | what it is |
 |---|---|
 | [`dbdb-cpp/`](dbdb-cpp/) | the C++ implementation — build and usage instructions live there |
+| [`dbdb-rust/`](dbdb-rust/) | the Rust implementation, a port of the same design |
 | [`dbdb-python/`](dbdb-python/) | the original [500 Lines](https://aosabook.org/en/500L/dbdb-dog-bed-database.html) Python implementation, wrapped to satisfy the same contract |
 | [`antithesis/`](antithesis/) | the Antithesis test harness, which names no implementation language |
 

@@ -1,0 +1,22 @@
+[package]
+name = "dbdb"
+version = "0.1.0"
+edition = "2021"
+# std::fs::File::lock(), which src/storage.rs uses to serialize writers, is
+# stable from 1.89 on. Saying so here turns an older toolchain into one clear
+# message instead of a confusing "no method named lock".
+rust-version = "1.89"
+
+# No dependencies on purpose. Everything this needs -- files, flock, a process
+# id -- is in std, which means the build never reaches the network and there is
+# no lockfile churn to worry about.
+[dependencies]
+
+[[bin]]
+name = "dbdb"
+path = "src/main.rs"
+
+[profile.release]
+# The binary that goes to /out/symbols/ has to be able to tell Antithesis which
+# line of which file a coverage edge belongs to, so keep the debug info.
+debug = true
