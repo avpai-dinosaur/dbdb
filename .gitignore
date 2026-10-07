@@ -1,6 +1,7 @@
 .vscode
 *.db
 __pycache__/
+.cache/
 
 # dbdb-cpp build artifacts
 dbdb-cpp/build/
